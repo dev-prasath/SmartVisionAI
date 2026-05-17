@@ -12,6 +12,8 @@ The project performs:
 
 ---
 
+# ML Models Drive Link: https://drive.google.com/drive/folders/1w3wUG2NTFo89b7uHZcMqAsKKjzgmyXS7?usp=drive_link
+
 # 🚀 Features
 
 ## 🖼 Image Classification
