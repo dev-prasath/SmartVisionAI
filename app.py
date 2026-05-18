@@ -34,7 +34,6 @@ from tensorflow.keras.layers import (
 
 from download_models import download_models
 
-download_models()
 
 print("Testing completed successfully!")
 
@@ -548,6 +547,7 @@ if page == "Home":
 
 elif page == "Image Classification":
 
+
     st.title("🖼 Image Classification")
 
     uploaded_file = st.file_uploader(
@@ -712,6 +712,7 @@ elif page == "Object Detection":
 
     st.title("🎯 YOLOv8 Object Detection")
 
+
     uploaded_file = st.file_uploader(
         "Upload Image",
         type=["jpg", "jpeg", "png"],
@@ -744,6 +745,7 @@ elif page == "Object Detection":
                 # =====================================
                 # LOAD YOLO ONLY WHEN NEEDED
                 # =====================================
+                download_models()
 
                 yolo_model = load_yolo_model()
 
@@ -905,76 +907,76 @@ elif page == "Performance Dashboard":
 # LIVE WEBCAM
 # =========================================================
 
-elif page == "Live Webcam":
+# elif page == "Live Webcam":
 
-    st.title("📹 Live Webcam Detection")
+#     st.title("📹 Live Webcam Detection")
 
-    st.warning(
-        """
-        Webcam detection works best in local system.
-        Some cloud platforms may not support webcam access.
-        """
-    )
+#     st.warning(
+#         """
+#         Webcam detection works best in local system.
+#         Some cloud platforms may not support webcam access.
+#         """
+#     )
 
-    enable_webcam = st.checkbox(
-        "Enable Webcam"
-    )
+#     enable_webcam = st.checkbox(
+#         "Enable Webcam"
+#     )
 
-    if enable_webcam:
+#     if enable_webcam:
 
-        # =====================================
-        # LOAD YOLO ONLY WHEN NEEDED
-        # =====================================
+#         # =====================================
+#         # LOAD YOLO ONLY WHEN NEEDED
+#         # =====================================
 
-        yolo_model = load_yolo_model()
+#         yolo_model = load_yolo_model()
 
-        FRAME_WINDOW = st.image([])
+#         FRAME_WINDOW = st.image([])
 
-        camera = cv2.VideoCapture(0)
+#         camera = cv2.VideoCapture(0)
 
-        stop_button = st.button(
-            "Stop Webcam"
-        )
+#         stop_button = st.button(
+#             "Stop Webcam"
+#         )
 
-        while camera.isOpened() and not stop_button:
+#         while camera.isOpened() and not stop_button:
 
-            success, frame = camera.read()
+#             success, frame = camera.read()
 
-            if not success:
+#             if not success:
 
-                st.error(
-                    "Unable to access webcam"
-                )
+#                 st.error(
+#                     "Unable to access webcam"
+#                 )
 
-                break
+#                 break
 
-            # =================================
-            # RUN YOLO DETECTION
-            # =================================
+#             # =================================
+#             # RUN YOLO DETECTION
+#             # =================================
 
-            results = yolo_model.predict(
-                source=frame,
-                conf=0.25,
-                verbose=False
-            )
+#             results = yolo_model.predict(
+#                 source=frame,
+#                 conf=0.25,
+#                 verbose=False
+#             )
 
-            annotated_frame = results[0].plot()
+#             annotated_frame = results[0].plot()
 
-            annotated_frame = cv2.cvtColor(
-                annotated_frame,
-                cv2.COLOR_BGR2RGB
-            )
+#             annotated_frame = cv2.cvtColor(
+#                 annotated_frame,
+#                 cv2.COLOR_BGR2RGB
+#             )
 
-            FRAME_WINDOW.image(
-                annotated_frame,
-                channels="RGB"
-            )
+#             FRAME_WINDOW.image(
+#                 annotated_frame,
+#                 channels="RGB"
+#             )
 
-        camera.release()
+#         camera.release()
 
-        st.success(
-            "Webcam stopped successfully"
-        )
+#         st.success(
+#             "Webcam stopped successfully"
+#         )
 # =========================================================
 # DATASET INFO
 # =========================================================
