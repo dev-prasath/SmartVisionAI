@@ -32,6 +32,14 @@ from tensorflow.keras.layers import (
     BatchNormalization
 )
 
+from download_models import download_models
+
+download_models()
+
+print("Testing completed successfully!")
+
+
+
 # =========================================================
 # PAGE CONFIG
 # =========================================================
@@ -226,62 +234,116 @@ def create_efficientnet_model():
 # LOAD ALL MODELS
 # =========================================================
 
+# =========================================================
+# LOAD MOBILENET
+# =========================================================
+
 @st.cache_resource
-def load_models():
+def load_mobilenet_model():
 
-    # =====================================================
-    # MOBILE NET
-    # =====================================================
+    model = create_mobilenet_model()
 
-    mobilenet_model = create_mobilenet_model()
-
-    mobilenet_model.load_weights(
-
+    model.load_weights(
         "models/mobilenet_weights.weights.h5"
     )
 
     print("✅ MobileNet Loaded")
 
+    return model
 
-    # =====================================================
-    # RESNET50
-    # =====================================================
 
-    resnet_model = create_resnet_model()
+# =========================================================
+# LOAD RESNET50
+# =========================================================
 
-    resnet_model.load_weights(
+@st.cache_resource
+def load_resnet_model():
 
+    model = create_resnet_model()
+
+    model.load_weights(
         "models/resnet50_weights.weights.h5"
     )
 
     print("✅ ResNet50 Loaded")
 
+    return model
 
-    # =====================================================
-    # EFFICIENTNET
-    # =====================================================
 
-    efficientnet_model = create_efficientnet_model()
+# =========================================================
+# LOAD EFFICIENTNET
+# =========================================================
 
-    efficientnet_model.load_weights(
+@st.cache_resource
+def load_effnet_model():
 
+    model = create_efficientnet_model()
+
+    model.load_weights(
         "models/efficientnet_weights.weights.h5"
     )
 
     print("✅ EfficientNet Loaded")
 
-
-    return (
-
-        mobilenet_model,
-
-        resnet_model,
-
-        efficientnet_model
-    )
+    return model
 
 
-mobilenet_model, resnet_model, efficientnet_model = load_models()
+# @st.cache_resource
+# def load_models():
+
+#     # =====================================================
+#     # MOBILE NET
+#     # =====================================================
+
+#     mobilenet_model = create_mobilenet_model()
+
+#     mobilenet_model.load_weights(
+
+#         "models/mobilenet_weights.weights.h5"
+#     )
+
+#     print("✅ MobileNet Loaded")
+
+
+#     # =====================================================
+#     # RESNET50
+#     # =====================================================
+
+#     resnet_model = create_resnet_model()
+
+#     resnet_model.load_weights(
+
+#         "models/resnet50_weights.weights.h5"
+#     )
+
+#     print("✅ ResNet50 Loaded")
+
+
+#     # =====================================================
+#     # EFFICIENTNET
+#     # =====================================================
+
+#     efficientnet_model = create_efficientnet_model()
+
+#     efficientnet_model.load_weights(
+
+#         "models/efficientnet_weights.weights.h5"
+#     )
+
+#     print("✅ EfficientNet Loaded")
+
+
+#     return (
+
+#         mobilenet_model,
+
+#         resnet_model,
+
+#         efficientnet_model
+#     )
+
+
+# mobilenet_model, resnet_model, efficientnet_model = load_models()
 
 # =========================================================
 # LOAD YOLO MODEL
@@ -294,7 +356,7 @@ def load_yolo_model():
     return YOLO("models/best .pt")
 
 
-yolo_model = load_yolo_model()
+# yolo_model = load_yolo_model()
 
 # =========================================================
 # PREPROCESS IMAGE
@@ -479,16 +541,33 @@ if page == "Home":
             unsafe_allow_html=True
         )
 
+
 # =========================================================
 # IMAGE CLASSIFICATION
 # =========================================================
 
 elif page == "Image Classification":
+
     st.title("🖼 Image Classification")
 
     uploaded_file = st.file_uploader(
         "Upload Image",
         type=["jpg", "jpeg", "png"]
+    )
+
+    # =====================================================
+    # MODEL SELECTION
+    # =====================================================
+
+    selected_model = st.selectbox(
+
+        "Choose Classification Model",
+
+        [
+            "MobileNetV2",
+            "ResNet50",
+            "EfficientNetB0"
+        ]
     )
 
     if uploaded_file is not None:
@@ -510,106 +589,94 @@ elif page == "Image Classification":
             if st.button("🔍 Predict Image"):
 
                 with st.spinner(
-                    "Running Deep Learning Models..."
+                    "Running Deep Learning Model..."
                 ):
 
                     processed_image = preprocess_image(
                         image
                     )
 
-                    # =========================================
-                    # MOBILE NET
-                    # =========================================
+                    # =====================================
+                    # LOAD SELECTED MODEL
+                    # =====================================
 
-                    mobilenet_pred = mobilenet_model.predict(
+                    if selected_model == "MobileNetV2":
+
+                        model = load_mobilenet_model()
+
+                    elif selected_model == "ResNet50":
+
+                        model = load_resnet_model()
+
+                    else:
+
+                        model = load_effnet_model()
+
+                    # =====================================
+                    # PREDICTION
+                    # =====================================
+
+                    prediction = model.predict(
                         processed_image
                     )
 
-                    mobile_class = np.argmax(
-                        mobilenet_pred
+                    predicted_class = np.argmax(
+                        prediction
                     )
 
-                    mobile_conf = np.max(
-                        mobilenet_pred
+                    confidence = np.max(
+                        prediction
                     )
 
-                    # =========================================
-                    # RESNET
-                    # =========================================
+                    # =====================================
+                    # DISPLAY RESULTS
+                    # =====================================
 
-                    resnet_pred = resnet_model.predict(
-                        processed_image
+                    st.success(
+                        f"""
+                        ✅ Prediction:
+                        {CLASS_NAMES[predicted_class]}
+                        """
                     )
 
-                    resnet_class = np.argmax(
-                        resnet_pred
+                    st.info(
+                        f"""
+                        🎯 Confidence:
+                        {confidence*100:.2f}%
+                        """
                     )
 
-                    resnet_conf = np.max(
-                        resnet_pred
-                    )
+                    # =====================================
+                    # TOP 5 PREDICTIONS
+                    # =====================================
 
-                    # =========================================
-                    # EFFICIENTNET
-                    # =========================================
+                    top5_indices = np.argsort(
+                        prediction[0]
+                    )[-5:][::-1]
 
-                    efficient_pred = efficientnet_model.predict(
-                        processed_image
-                    )
+                    top5_classes = [
+                        CLASS_NAMES[i]
+                        for i in top5_indices
+                    ]
 
-                    efficient_class = np.argmax(
-                        efficient_pred
-                    )
-
-                    efficient_conf = np.max(
-                        efficient_pred
-                    )
-
-                    # =========================================
-                    # RESULTS TABLE
-                    # =========================================
+                    top5_scores = [
+                        prediction[0][i] * 100
+                        for i in top5_indices
+                    ]
 
                     results_df = pd.DataFrame({
 
-                        "Model": [
-
-                            "MobileNetV2",
-
-                            "ResNet50",
-
-                            "EfficientNetB0"
-                        ],
-
-                        "Prediction": [
-
-                            CLASS_NAMES[mobile_class],
-
-                            CLASS_NAMES[resnet_class],
-
-                            CLASS_NAMES[efficient_class]
-                        ],
+                        "Class": top5_classes,
 
                         "Confidence (%)": [
 
-                            round(
-                                mobile_conf * 100,
-                                2
-                            ),
-
-                            round(
-                                resnet_conf * 100,
-                                2
-                            ),
-
-                            round(
-                                efficient_conf * 100,
-                                2
-                            )
+                            round(score, 2)
+                            for score in top5_scores
                         ]
                     })
 
                     st.subheader(
-                        "📊 Model Predictions"
+                        "📊 Top 5 Predictions"
                     )
 
                     st.dataframe(
@@ -617,84 +684,26 @@ elif page == "Image Classification":
                         use_container_width=True
                     )
 
-                    # =========================================
-                    # BEST MODEL
-                    # =========================================
-
-                    best_confidence = max(
-                        mobile_conf,
-                        resnet_conf,
-                        efficient_conf
-                    )
-
-                    if best_confidence == mobile_conf:
-
-                        st.success(
-                            f"""
-                            🏆 Best Prediction:
-                            MobileNetV2 predicted
-                            {CLASS_NAMES[mobile_class]}
-                            with confidence
-                            {mobile_conf*100:.2f}%
-                            """
-                        )
-
-                    elif best_confidence == resnet_conf:
-
-                        st.success(
-                            f"""
-                            🏆 Best Prediction:
-                            ResNet50 predicted
-                            {CLASS_NAMES[resnet_class]}
-                            with confidence
-                            {resnet_conf*100:.2f}%
-                            """
-                        )
-
-                    else:
-
-                        st.success(
-                            f"""
-                            🏆 Best Prediction:
-                            EfficientNetB0 predicted
-                            {CLASS_NAMES[efficient_class]}
-                            with confidence
-                            {efficient_conf*100:.2f}%
-                            """
-                        )
-
-                    # =========================================
-                    # CONFIDENCE CHART
-                    # =========================================
+                    # =====================================
+                    # CHART
+                    # =====================================
 
                     chart_df = pd.DataFrame({
 
-                        "Models": [
+                        "Class": top5_classes,
 
-                            "MobileNetV2",
-
-                            "ResNet50",
-
-                            "EfficientNetB0"
-                        ],
-
-                        "Confidence": [
-
-                            mobile_conf * 100,
-
-                            resnet_conf * 100,
-
-                            efficient_conf * 100
-                        ]
+                        "Confidence": top5_scores
                     })
 
                     st.subheader(
-                        "📈 Confidence Comparison"
+                        "📈 Confidence Scores"
                     )
 
                     st.bar_chart(
-                        chart_df.set_index("Models")
+                        chart_df.set_index("Class")
                     )
+
+
 # =========================================================
 # OBJECT DETECTION
 # =========================================================
@@ -728,7 +737,19 @@ elif page == "Object Detection":
 
         if st.button("🚀 Run YOLO Detection"):
 
-            with st.spinner("🚀 Running YOLOv8 Detection..."):
+            with st.spinner(
+                "Running YOLOv8 Detection..."
+            ):
+
+                # =====================================
+                # LOAD YOLO ONLY WHEN NEEDED
+                # =====================================
+
+                yolo_model = load_yolo_model()
+
+                # =====================================
+                # SAVE TEMP IMAGE
+                # =====================================
 
                 temp_file = tempfile.NamedTemporaryFile(
                     delete=False,
@@ -737,10 +758,18 @@ elif page == "Object Detection":
 
                 image.save(temp_file.name)
 
+                # =====================================
+                # RUN PREDICTION
+                # =====================================
+
                 results = yolo_model.predict(
                     source=temp_file.name,
                     conf=confidence_threshold
                 )
+
+                # =====================================
+                # DRAW BOUNDING BOXES
+                # =====================================
 
                 plotted_image = results[0].plot()
 
@@ -755,11 +784,17 @@ elif page == "Object Detection":
                     use_container_width=True
                 )
 
+                # =====================================
+                # EXTRACT DETECTIONS
+                # =====================================
+
                 boxes = results[0].boxes
 
                 detection_data = {
+
                     "Object": [],
-                    "Confidence": []
+
+                    "Confidence (%)": []
                 }
 
                 if len(boxes) > 0:
@@ -768,27 +803,58 @@ elif page == "Object Detection":
 
                         cls_id = int(box.cls[0])
 
-                        class_name = yolo_model.names[cls_id]
+                        class_name = yolo_model.names[
+                            cls_id
+                        ]
 
-                        confidence = float(box.conf[0])
+                        confidence = float(
+                            box.conf[0]
+                        )
 
-                        detection_data["Object"].append(class_name)
+                        detection_data[
+                            "Object"
+                        ].append(class_name)
 
-                        detection_data["Confidence"].append(
+                        detection_data[
+                            "Confidence (%)"
+                        ].append(
                             round(confidence * 100, 2)
                         )
 
-                    detection_df = pd.DataFrame(detection_data)
+                    detection_df = pd.DataFrame(
+                        detection_data
+                    )
+
+                    st.subheader(
+                        "📊 Detection Results"
+                    )
 
                     st.dataframe(
                         detection_df,
                         use_container_width=True
                     )
 
+                    # =================================
+                    # DETECTION COUNTS
+                    # =================================
+
+                    object_counts = detection_df[
+                        "Object"
+                    ].value_counts()
+
+                    st.subheader(
+                        "📈 Object Counts"
+                    )
+
+                    st.bar_chart(
+                        object_counts
+                    )
+
                 else:
 
-                    st.warning("No objects detected")
-
+                    st.warning(
+                        "No objects detected."
+                    )
 # =========================================================
 # PERFORMANCE DASHBOARD
 # =========================================================
@@ -843,39 +909,72 @@ elif page == "Live Webcam":
 
     st.title("📹 Live Webcam Detection")
 
-    run = st.checkbox("Start Webcam")
+    st.warning(
+        """
+        Webcam detection works best in local system.
+        Some cloud platforms may not support webcam access.
+        """
+    )
 
-    FRAME_WINDOW = st.image([])
+    enable_webcam = st.checkbox(
+        "Enable Webcam"
+    )
 
-    camera = cv2.VideoCapture(0)
+    if enable_webcam:
 
-    while run:
+        # =====================================
+        # LOAD YOLO ONLY WHEN NEEDED
+        # =====================================
 
-        success, frame = camera.read()
+        yolo_model = load_yolo_model()
 
-        if not success:
-            st.error("Webcam not detected")
-            break
+        FRAME_WINDOW = st.image([])
 
-        results = yolo_model.predict(
-            source=frame,
-            conf=0.25
+        camera = cv2.VideoCapture(0)
+
+        stop_button = st.button(
+            "Stop Webcam"
         )
 
-        annotated_frame = results[0].plot()
+        while camera.isOpened() and not stop_button:
 
-        annotated_frame = cv2.cvtColor(
-            annotated_frame,
-            cv2.COLOR_BGR2RGB
+            success, frame = camera.read()
+
+            if not success:
+
+                st.error(
+                    "Unable to access webcam"
+                )
+
+                break
+
+            # =================================
+            # RUN YOLO DETECTION
+            # =================================
+
+            results = yolo_model.predict(
+                source=frame,
+                conf=0.25,
+                verbose=False
+            )
+
+            annotated_frame = results[0].plot()
+
+            annotated_frame = cv2.cvtColor(
+                annotated_frame,
+                cv2.COLOR_BGR2RGB
+            )
+
+            FRAME_WINDOW.image(
+                annotated_frame,
+                channels="RGB"
+            )
+
+        camera.release()
+
+        st.success(
+            "Webcam stopped successfully"
         )
-
-        FRAME_WINDOW.image(
-            annotated_frame,
-            channels="RGB"
-        )
-
-    camera.release()
-
 # =========================================================
 # DATASET INFO
 # =========================================================
