@@ -1,6 +1,6 @@
+Live Demo Link: https://huggingface.co/spaces/Prasanth28/SmartVisionAI
 ---
 title: SmartVision AI
-emoji: 🤖
 colorFrom: blue
 colorTo: indigo
 sdk: docker
